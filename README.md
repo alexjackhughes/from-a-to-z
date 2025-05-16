@@ -1,19 +1,25 @@
-# Lost City of Z
+# From A to the Lost City of Z
 
 ## Overview
 
-Lost City of Z is an open-source project for gathering and analyzing satellite imagery and elevation data for the Chapada Diamantina region in Brazil. The project automates the collection of:
+This is my submission for the [Lost City of Z](https://openai.com/openai-to-z-challenge/) competition.
+
+From A to the Lost City of Z is an open-source project for gathering and analyzing satellite imagery and elevation data for the Chapada Diamantina region in Brazil. The project automates the collection of:
 
 - Sentinel-2 L2A satellite imagery (true-color bands)
 - SRTM-1 arc-second elevation data
 - Planet NICFI monthly mosaics
+
+We then take that imagery, split them into thousands of images, and then use AI to search for landmarks and other features that are present in [Manuscript 512](https://en.wikipedia.org/wiki/Manuscript_512).
 
 ## Features
 
 - Automated download of Sentinel-2 L2A scenes with configurable cloud cover thresholds
 - SRTM-1 arc-second DEM tile collection
 - Planet NICFI mosaic integration (requires API key)
-- Configurable bounding box and date ranges
+- Configurable bounding box and date ranges i.e. you could search anywhere in the world at any time
+- Formatting of the imagery into usable files for the AI model
+- Ai implementation with custom prompt that could be tailored to finding any specific feature
 - Efficient file management and download handling
 
 ## Getting Started
@@ -79,3 +85,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Microsoft Planetary Computer for Sentinel-2 data access
 - Planet Labs for NICFI mosaics
 - NASA for SRTM elevation data
+- OpenAI for the challenge
