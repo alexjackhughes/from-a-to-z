@@ -40,6 +40,8 @@ from dotenv import load_dotenv
 from PIL import Image
 from pystac_client import Client
 
+from process_tiles import main as process_tiles_main
+
 # ────────────────────────────────
 # User‑tweakable parameters
 # ────────────────────────────────
@@ -317,11 +319,12 @@ def main() -> None:
 
     # These functions format the images
     # build_resized_gallery()
-    create_tiled_previews()
-    print("✔ All tiles + 1 kpx previews saved to", OUTPUT_DIR, "and", PREVIEW_DIR)
+    # create_tiled_previews()
+    # print("✔ All tiles + 1 kpx previews saved to", OUTPUT_DIR, "and", PREVIEW_DIR)
 
     # These functions send the images to o3
-
+    process_tiles_main()
+    print("✔ Water detection analysis completed")
 
 if __name__ == "__main__":
     main()

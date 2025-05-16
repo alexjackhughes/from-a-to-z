@@ -12,6 +12,8 @@ From A to the Lost City of Z is an open-source project for gathering and analyzi
 
 We then take that imagery, split them into thousands of images, and then use AI to search for landmarks and other features that are present in [Manuscript 512](https://en.wikipedia.org/wiki/Manuscript_512).
 
+I also include a journal.md file of my thought process as I was going through it.
+
 ## Features
 
 - Automated download of Sentinel-2 L2A scenes with configurable cloud cover thresholds
