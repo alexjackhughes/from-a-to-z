@@ -4,7 +4,7 @@ Gather Sentinel‑2, SRTM DEM, and Planet NICFI mosaic tiles for the Chapada Dia
 
 Dependencies
 ------------
-    pip install pystac-client planetary-computer shapely rasterio requests boto3
+    pip install pystac-client planetary-computer shapely rasterio requests boto3 python-dotenv
 
 Environment variables
 ---------------------
@@ -21,7 +21,7 @@ North –12.10
 The script grabs:
 * **Sentinel‑2 L2A** scenes with <20 % cloud cover since 2024‑01‑01 (true‑colour bands B04‑03‑02).
 * All **SRTM‑1 arc‑second** tiles overlapping the box.
-* The **NICFI March 2024 mosaic** quads that intersect the box.
+* The **NICFI March 2024 mosaic** quads that intersect the box.
 
 Edit the parameters at the top if you want a different time span, cloud threshold, or NICFI month.
 """
@@ -33,6 +33,11 @@ from shapely.geometry import box, mapping
 import requests
 import boto3
 from pystac_client import Client
+from dotenv import load_dotenv
+import planetary_computer
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ──────────────────────────────────────────────────────────────────────
 # User‑tweakable parameters
@@ -93,16 +98,39 @@ def fetch_sentinel2(bbox, date_range, max_cloud, limit=20):
         query={"eo:cloud_cover": {"lt": max_cloud}},
         limit=limit,
     )
-    items = list(search.get_items())
+    items = list(search.items())
     print(f"Found {len(items)} Sentinel‑2 scenes meeting criteria")
 
     for item in items:
-        signed_item = Client.open(item.href).get_item(item.id).signed_links()
-        for band in ("B04", "B03", "B02"):
-            asset = signed_item.assets[band]
-            dest = OUTPUT_DIR / f"{item.id}_{band}.tif"
-            _download(asset.href, dest)
-        (OUTPUT_DIR / f"{item.id}.json").write_text(item.to_json())
+        try:
+            print(f"Processing {item.id}")
+            # Create a directory for this scene
+            scene_dir = OUTPUT_DIR / item.id
+            scene_dir.mkdir(exist_ok=True)
+
+            # Download each band
+            for band in ("B04", "B03", "B02"):
+                asset = item.assets[band]
+                # Get the signed URL using planetary_computer
+                signed_href = planetary_computer.sign(asset.href)
+                dest = scene_dir / f"{band}.tif"
+                try:
+                    print(f"Downloading {band} band...")
+                    _download(signed_href, dest)
+                except requests.exceptions.HTTPError as e:
+                    print(f"⚠️  Failed to download {band} band for {item.id}: {e}")
+                    continue
+                except Exception as e:
+                    print(f"⚠️  Unexpected error downloading {band} band: {e}")
+                    continue
+
+            # Save the STAC metadata
+            (scene_dir / "metadata.json").write_text(item.to_json())
+            print(f"✓ Completed processing {item.id}")
+
+        except Exception as e:
+            print(f"⚠️  Error processing {item.id}: {e}")
+            continue
 
 # ──────────────────────────────────────────────────────────────────────
 # Planet NICFI monthly mosaics (requires PL_API_KEY)
@@ -116,16 +144,36 @@ def fetch_nicfi(bbox, year, month):
 
     mosaic_id = f"nicfi_monthly_{year}_{month:02d}_mosaic"
     mosaic_url = f"https://api.planet.com/basemaps/v1/mosaics/{mosaic_id}?api_key={api_key}"
-    mosaic = requests.get(mosaic_url).json()
-    quad_url = mosaic["_links"]["quads"]
-    bbox_str = ",".join(map(str, bbox))
-    page = requests.get(quad_url, params={"bbox": bbox_str, "api_key": api_key}).json()
 
-    for quad in page["items"]:
-        quad_id = quad["id"]
-        dest = OUTPUT_DIR / f"{quad_id}.tif"
-        tile_url = quad["_links"]["download"] + f"?api_key={api_key}"
-        _download(tile_url, dest)
+    try:
+        response = requests.get(mosaic_url)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        mosaic = response.json()
+
+        # Debug the response
+        print(f"NICFI API Response: {mosaic}")
+
+        if "_links" not in mosaic:
+            print(f"Error: Unexpected API response format. Missing '_links' key. Full response: {mosaic}")
+            return
+
+        quad_url = mosaic["_links"]["quads"]
+        bbox_str = ",".join(map(str, bbox))
+        page = requests.get(quad_url, params={"bbox": bbox_str, "api_key": api_key}).json()
+
+        for quad in page["items"]:
+            quad_id = quad["id"]
+            dest = OUTPUT_DIR / f"{quad_id}.tif"
+            tile_url = quad["_links"]["download"] + f"?api_key={api_key}"
+            _download(tile_url, dest)
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error accessing Planet NICFI API: {e}")
+    except KeyError as e:
+        print(f"Error parsing API response: {e}")
+        print(f"Full response: {mosaic}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 # ──────────────────────────────────────────────────────────────────────
 # Entry point
