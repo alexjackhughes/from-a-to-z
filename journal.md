@@ -32,7 +32,7 @@ So, plan time:
 2. Ask o3 to tell me which images to check.
 3. We review those images for consistency with the manuscript.
 
-After some back and forth with Windsurf, the  script is running. Tiles are coming in.
+After some back and forth with Windsurf, the script is running. Tiles are coming in.
 
 They’re black and white. Huge. They are also formatted in .tif. wtf is that?
 
@@ -48,3 +48,5 @@ The images are downloaded, but they're huge. We need to re-work my plan:
 2. Colorize them
 3. Split every preview into 100px x 100px tiles at full resolution and size
 4. We write the o3 script to search those tiles for landmarks
+
+Before we do that though, let's save where we are and push to github.

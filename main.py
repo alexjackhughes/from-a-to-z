@@ -1,5 +1,5 @@
 """
-Gather Sentinel‑2, SRTM DEM, and Planet NICFI tiles for Chapada Diamantina
+Gather Sentinel‑2, SRTM DEM, and Planet NICFI tiles for Chapada Diamantina
 ===========================================================================
 A single‑file helper that
 * **downloads** raw analysis‑ready data (Sentinel‑2 SR bands, SRTM DEM, NICFI mosaics),
@@ -249,17 +249,78 @@ def build_resized_gallery() -> None:
             rel = Path("preview") / new_name
             _resize_and_write(path, rel)
 
+def create_tiled_previews() -> None:
+    """
+    Creates 122x122 pixel tiles from all preview images in data_tiles.
+    Each preview image is split into multiple tiles and saved in preview_tiles.
+    """
+    TILE_SIZE = 122
+    PREVIEW_TILES_DIR = Path("preview_tiles")
+    PREVIEW_TILES_DIR.mkdir(exist_ok=True)
+
+    # Walk through all preview images in data_tiles
+    for path in OUTPUT_DIR.rglob("preview.jpg"):
+        if not path.is_file():
+            continue
+
+        # Create corresponding directory structure in preview_tiles
+        rel_path = path.relative_to(OUTPUT_DIR)
+        parent_dir = rel_path.parent
+        tiles_dir = PREVIEW_TILES_DIR / parent_dir
+        tiles_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            # Open the preview image
+            with Image.open(path) as img:
+                width, height = img.size
+
+                # Calculate number of tiles in each dimension
+                tiles_x = (width + TILE_SIZE - 1) // TILE_SIZE
+                tiles_y = (height + TILE_SIZE - 1) // TILE_SIZE
+
+                # Create tiles
+                for y in range(tiles_y):
+                    for x in range(tiles_x):
+                        # Calculate tile coordinates
+                        left = x * TILE_SIZE
+                        upper = y * TILE_SIZE
+                        right = min(left + TILE_SIZE, width)
+                        lower = min(upper + TILE_SIZE, height)
+
+                        # Crop the tile
+                        tile = img.crop((left, upper, right, lower))
+
+                        # Create a new image with the desired size
+                        new_tile = Image.new('RGB', (TILE_SIZE, TILE_SIZE), (0, 0, 0))
+                        new_tile.paste(tile, (0, 0))
+
+                        # Save the tile
+                        tile_name = f"tile_{x:03d}_{y:03d}.jpg"
+                        tile_path = tiles_dir / tile_name
+                        new_tile.save(tile_path, "JPEG", quality=85, optimize=True)
+
+                print(f"✓ Created tiles for {parent_dir}")
+
+        except Exception as e:
+            print(f"⚠️  Error processing {path}: {e}")
+
 # ────────────────────────────────
 # Main entry
 # ────────────────────────────────
 
 def main() -> None:
     load_dotenv()
+    # These functions download the required tiles
     # fetch_srtm(BBOX)
-    fetch_sentinel2(BBOX, S2_DATE_RANGE, S2_MAX_CLOUD)
-    fetch_nicfi(BBOX, *NICFI_MONTH)
-    build_resized_gallery()
+    # fetch_sentinel2(BBOX, S2_DATE_RANGE, S2_MAX_CLOUD)
+    # fetch_nicfi(BBOX, *NICFI_MONTH)
+
+    # These functions format the images
+    # build_resized_gallery()
+    create_tiled_previews()
     print("✔ All tiles + 1 kpx previews saved to", OUTPUT_DIR, "and", PREVIEW_DIR)
+
+    # These functions send the images to o3
 
 
 if __name__ == "__main__":
