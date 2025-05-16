@@ -312,17 +312,17 @@ def create_tiled_previews() -> None:
 
 def main() -> None:
     load_dotenv()
-    # These functions download the required tiles
-    # fetch_srtm(BBOX)
-    # fetch_sentinel2(BBOX, S2_DATE_RANGE, S2_MAX_CLOUD)
-    # fetch_nicfi(BBOX, *NICFI_MONTH)
+    # These functions download the required imagery
+    fetch_srtm(BBOX)
+    fetch_sentinel2(BBOX, S2_DATE_RANGE, S2_MAX_CLOUD)
+    fetch_nicfi(BBOX, *NICFI_MONTH)
 
-    # These functions format the images
-    # build_resized_gallery()
-    # create_tiled_previews()
-    # print("✔ All tiles + 1 kpx previews saved to", OUTPUT_DIR, "and", PREVIEW_DIR)
+    # These functions format the images and split them into 122x122 pixel tiles for easier processing
+    build_resized_gallery()
+    create_tiled_previews()
+    print("✔ All tiles + 1 kpx previews saved to", OUTPUT_DIR, "and", PREVIEW_DIR)
 
-    # These functions send the images to o3
+    # These functions send the images to o3 to look for rivers
     process_tiles_main()
     print("✔ Water detection analysis completed")
 

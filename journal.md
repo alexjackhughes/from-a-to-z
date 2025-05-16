@@ -49,4 +49,12 @@ The images are downloaded, but they're huge. We need to re-work my plan:
 3. Split every preview into 100px x 100px tiles at full resolution and size
 4. We write the o3 script to search those tiles for landmarks
 
-Before we do that though, let's save where we are and push to github.
+Just pushed to github.
+
+We did the above, so now we have o3 running on the tiles looking for rivers.
+
+What next?
+
+We know which images and specific tiles have rivers.
+
+We need to look for more of the landmarks, and see if we can't see the city I guess?
